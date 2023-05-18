@@ -35,4 +35,4 @@ class CNN(nn.Module):
         x = self.conv2(x)
         x = x.view(x.size(0), -1)
         output = self.out(x)
-        return output, x
+        return output

@@ -48,7 +48,8 @@ def train_model():
     for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(train_loader):
 
-            images = images.reshape(-1, 28 * 28).to(device)
+            images = images.to(device)
+            # images = images.reshape(-1, 28 * 28).to(device)
             labels = labels.to(device)
 
             outputs = model(images)
@@ -85,7 +86,7 @@ def validate_data():
         accuracy = 100.0 * num_correct / num_samples
         print(f"Accuracy of the network: {accuracy} %")
 
-        for i in range(100):
+        for i in range(10):
             accuracy = 100.0 * num_class_correct[i] / num_class_samples[i]
             print(f"Accuracy of {classes[i]}: {accuracy} %")
 
@@ -95,12 +96,12 @@ if __name__ == '__main__':
 
     model = CNN().to(device)
 
-    criterion = nn.CrossEntropyLoss
+    criterion = nn.CrossEntropyLoss()
     optimiser = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    #train_model()
+    train_model()
 
     file = "model.pth"
     torch.save(model.state_dict(), file)
 
-    #validate_data()
+    validate_data()
