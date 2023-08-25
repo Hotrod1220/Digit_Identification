@@ -1,12 +1,11 @@
 import torch
-import torch.nn as nn
+from torch import nn 
 
-class CNN(nn.Module):
-
+class Model(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
+        super().__init__()
 
-        self.conv1 = nn.Sequential(
+        self.convolutional = nn.Sequential(
             nn.Conv2d(
                 in_channels=1,
                 out_channels=16,
@@ -16,8 +15,7 @@ class CNN(nn.Module):
             ),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
-        )
-        self.conv2 = nn.Sequential(
+
             nn.Conv2d(
                 in_channels=16,
                 out_channels=32,
@@ -26,13 +24,12 @@ class CNN(nn.Module):
                 padding=2
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size = 2),
+            nn.MaxPool2d(kernel_size=2),
         )
-        self.out = nn.Linear(32 * 7 * 7, 10)
+        self.output = nn.Linear(32 * 7 * 7, 10)
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = x.view(x.size(0), -1)
-        output = self.out(x)
+        x = self.convolutional(x)
+        x = torch.flatten(x, 1)
+        output = self.output(x)
         return output
