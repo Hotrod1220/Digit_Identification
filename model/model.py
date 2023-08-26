@@ -31,5 +31,5 @@ class Model(nn.Module):
     def forward(self, x):
         x = self.convolutional(x)
         x = torch.flatten(x, 1)
-        output = self.output(x)
-        return output
+        x = self.output(x)
+        return x

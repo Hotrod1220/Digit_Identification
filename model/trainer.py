@@ -27,7 +27,7 @@ class Trainer:
         total_accuracy = 0
         total = len(self.training)
 
-        for images, labels in tqdm(self.training, total=total):
+        for (images, labels) in tqdm(self.training, total=total):
             images = images.to(self.device)
             labels = labels.to(self.device)
 
@@ -38,8 +38,7 @@ class Trainer:
 
             _, prediction = torch.max(output, dim=1)
             
-            correct = torch.sum(prediction == labels).item()
-            total_accuracy += correct
+            total_accuracy += (prediction == labels).sum().item()
 
             loss.backward()
 
@@ -70,12 +69,11 @@ class Trainer:
 
             _, prediction = torch.max(output, dim=1)
             
-            correct = torch.sum(prediction == labels).item()
-            total_accuracy += correct
+            total_accuracy += (prediction == labels).sum().item()
 
         return (
-            total_loss / len(self.training),
-            total_accuracy / len(self.training.dataset)
+            total_loss / len(self.validating),
+            total_accuracy / len(self.validating.dataset)
         )
     
     def train(self):

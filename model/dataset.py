@@ -27,6 +27,6 @@ class MNIST:
         self.test_loader = DataLoader(
             dataset=test_data,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             num_workers=1
         )
