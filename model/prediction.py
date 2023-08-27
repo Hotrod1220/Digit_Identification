@@ -3,14 +3,16 @@ from model import Model
 
 class Predictor:
     def __init__(self):
-        self.model = Model()
-
         state = torch.load('state/model.pth')
+
+        self.model = Model()
         self.model.load_state_dict(state)
         self.model.eval()
 
-        self.mapping = [i for i in range(0,10)]
-
     def predict(self, image):
-        # TODO(Hotrod1220) pass image into model, get label and return it.
-        pass
+        image = image.unsqueeze(0)
+        output = self.model(image)
+        
+        _, prediction = torch.max(output, dim=1)
+
+        return prediction.item()

@@ -25,9 +25,8 @@ class Trainer:
 
         total_loss = 0.0
         total_accuracy = 0
-        total = len(self.training)
 
-        for (images, labels) in tqdm(self.training, total=total):
+        for (images, labels) in tqdm(self.training, total=len(self.training)):
             images = images.to(self.device)
             labels = labels.to(self.device)
 
@@ -42,8 +41,8 @@ class Trainer:
 
             loss.backward()
 
-            self.optimizer.step()
             self.optimizer.zero_grad()
+            self.optimizer.step()
 
         return (
             total_loss / len(self.training),
@@ -56,9 +55,7 @@ class Trainer:
         total_loss = 0.0
         total_accuracy = 0
 
-        total = len(self.validating)
-
-        for images, labels in tqdm(self.validating, total=total):
+        for images, labels in tqdm(self.validating, total=len(self.validating)):
             images = images.to(self.device)
             labels = labels.to(self.device)
 
