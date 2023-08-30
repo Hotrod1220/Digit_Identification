@@ -1,4 +1,5 @@
+matplotlib
+python-mnist
 torch
 torchvision
-matplotlib
 tqdm

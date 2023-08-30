@@ -1,9 +1,8 @@
 venv
 data
-model/state
 .DS_Store
-model/__pycache__/dataset.cpython-39.pyc
-model/__pycache__/trainer.cpython-39.pyc
-model/__pycache__/model.cpython-39.pyc
-images
-model/__pycache__/prediction.cpython-39.pyc
+model/state
+model/__pycache__/
+model/images/
+model/plot/
+analysis/dataset/
