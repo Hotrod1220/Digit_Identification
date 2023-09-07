@@ -3,7 +3,16 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 
 class MNIST:
+    """
+    MNIST dataset download and data loader.
+    """
     def __init__(self, batch_size = 128):
+        """
+        Download and load the MNIST dataset. 
+
+        Args:
+            batch_size: the size of the batch used for the datasets
+        """
         train_data = datasets.MNIST(
             root='data',
             train=True,

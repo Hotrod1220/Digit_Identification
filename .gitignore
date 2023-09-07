@@ -6,3 +6,4 @@ model/__pycache__/
 model/images/
 model/plot/
 analysis/dataset/
+analysis/__pycache__/

@@ -1,4 +1,5 @@
-import random
+import numpy as np
+
 from random import randrange
 from mnist import MNIST
 from pathlib import Path
@@ -6,7 +7,15 @@ from PIL import Image
 
 
 class Dataset:
+    """
+    Generates a dataset of randomly placed MNIST digits on a black background image.
+    Digit sizes can be 28x28 pixels or randomly vary in size.
+    """
     def __init__(self):
+        """
+        Constructor for Dataset, preprocesses the MNIST dataset and
+        background image for analysis.
+        """
         path = Path.cwd()
         # data = path.joinpath('analysis/data/MNIST/raw')
         data = path.joinpath('data/MNIST/raw')
@@ -21,13 +30,32 @@ class Dataset:
             color=0
         )
 
-    def listToImage(self, image_list):
+    def _listToImage(self, image_list):
+        """
+        Converts a list to a PIL Image.
+
+        Args:
+            image_list: The pixel values of the image to be converted.
+
+        Returns:
+            PIL Image.
+        """
         pixels = image_list
         image = Image.new(mode='L', size=(28, 28))
         image.putdata(pixels)
         return image
     
-    def intersection(self, positions, coord, image_size):
+    def _intersection(self, positions, coord, image_size):
+        """
+        Checks for intersection between two coordinates.
+
+        Args:
+            positions: list containing the top-left coordinate of already placed digits.
+            coord: coordinate of the new digit to be placed.
+
+        Returns:
+            True if intersection, False otherwise.
+        """
         for position in positions:
             rect1_x1 = coord[0]
             rect1_y1 = coord[1]
@@ -49,6 +77,15 @@ class Dataset:
         return False
     
     def generate(self, vary_size):
+        """
+        Creates a dataset of randomly pasted digits on a black background, 
+        checks for intersections before pasting the digit. 
+
+        Args:
+            vary_size: boolean value indicates if the images should vary in size.
+                False - Task A
+                True - Task B
+        """
         path = Path.cwd().joinpath('dataset')
         # path = Path.cwd().joinpath('analysis/dataset')
 
@@ -73,7 +110,7 @@ class Dataset:
                 label = self.labels[index]
 
                 image = self.images[index]
-                image = self.listToImage(image)
+                image = self._listToImage(image)
 
                 if vary_size:
                     # Image scaling
@@ -86,7 +123,7 @@ class Dataset:
                 x = randrange(random_range)
                 y = randrange(random_range)
 
-                if not self.intersection(positions, (x, y), image_size):
+                if not self._intersection(positions, (x, y), image_size):
                     output.paste(image, (x, y))
             
                     positions.append((x, y))
@@ -101,7 +138,49 @@ class Dataset:
             
             file += 1
 
+    def digit_dimension(self):
+        """
+        Measures the average, maximum and minimum width and height of the MNIST digits.
+        """
+        avg_width = 0
+        avg_height = 0
+        maximum = {
+            'width' : 0,
+            'height' : 0
+        }
+        
+        for image in self.images:
+            image = self._listToImage(image)
+            image = np.array(image)
+            indices = np.where(image != 0)
+
+            start_x = np.min(indices[1])
+            end_x = np.max(indices[1])
+            start_y = np.min(indices[0])
+            end_y = np.max(indices[0])
+
+            width = end_x - start_x
+            height = end_y - start_y
+
+            avg_width += width
+            avg_height += height
+
+            if width > maximum['width']:
+                maximum['width'] = width
+            if height > maximum['height']:
+                maximum['height'] = height
+        
+        avg_width /= len(self.images)
+        avg_height /= len(self.images)
+        
+        print("MNIST Digit Information")
+        print(f"Average Width: {avg_width}")
+        print(f"Average Height: {avg_height}")
+        print(f"Max Width: {maximum['width']}")
+        print(f"Max Height: {maximum['height']}")
+
 
 if __name__ == '__main__':
     dataset = Dataset()
     dataset.generate(vary_size=False)
+    # dataset.digit_dimension()

@@ -2,7 +2,13 @@ import torch
 from torch import nn 
 
 class Model(nn.Module):
+    """
+    Model used to classify MNIST digits.
+    """
     def __init__(self):
+        """
+        Initializes the convolution neural network layers.
+        """
         super().__init__()
 
         self.convolutional = nn.Sequential(
@@ -29,6 +35,12 @@ class Model(nn.Module):
         self.output = nn.Linear(32 * 7 * 7, 10)
 
     def forward(self, x):
+        """
+        Callable function used to pass input through the neural network.
+
+        Args:
+            x: Tensor, input image pixel values.
+        """
         x = self.convolutional(x)
         x = torch.flatten(x, 1)
         x = self.output(x)

@@ -2,6 +2,9 @@ import torch
 from tqdm import tqdm
 
 class Trainer:
+    """
+    Trains a neural network.
+    """
     def __init__(
         self,
         epochs = 0,
@@ -21,6 +24,12 @@ class Trainer:
         self.validating = validating
 
     def _training_epoch(self):
+        """
+        Performs a single training epoch on the training dataset
+
+        Returns:
+            tuple, (accuracy, loss) of the training epoch
+        """
         self.model.train()
 
         total_loss = 0.0
@@ -50,6 +59,12 @@ class Trainer:
         )
 
     def _validating_epoch(self):
+        """
+        Performs a single training epoch on the validation dataset
+
+        Returns:
+            tuple, (accuracy, loss) of the validation epoch
+        """
         self.model.eval()
 
         total_loss = 0.0
@@ -74,6 +89,14 @@ class Trainer:
         )
     
     def train(self):
+        """
+        Training process of the model, records accuracy and 
+        loss of validation and training.
+
+        Returns:
+            Dict, training and validation accuracy and loss throughout
+            the training process.
+        """
         self.model.to(self.device)
 
         history = {

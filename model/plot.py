@@ -5,6 +5,9 @@ import pickle
 from pathlib import Path
 
 if __name__ == '__main__':
+    """
+    Plots the accuracy and loss of the CNN created.
+    """
     path = Path.cwd()
     path = path.joinpath('state/history.pkl')
 
