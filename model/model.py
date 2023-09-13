@@ -39,7 +39,7 @@ class Model(nn.Module):
         Callable function used to pass input through the neural network.
 
         Args:
-            x: Tensor, input image pixel values.
+            x: Tensor, input image.
         """
         x = self.convolutional(x)
         x = torch.flatten(x, 1)

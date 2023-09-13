@@ -1,4 +1,14 @@
 import torch
+from pathlib import Path
+
+import sys
+import os
+
+# SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+# from model.model import Model  # noqa: E402
+
 from model import Model
 
 class Predictor:
@@ -9,7 +19,10 @@ class Predictor:
         """
         Loads the trained model weights.
         """
-        state = torch.load('state/model.pth')
+        # path = Path.cwd().joinpath('state/model.pth')
+        # Debugger
+        path = Path.cwd().joinpath('model/state/model.pth')
+        state = torch.load(path)
 
         self.model = Model()
         self.model.load_state_dict(state)

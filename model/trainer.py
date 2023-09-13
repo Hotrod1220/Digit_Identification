@@ -39,6 +39,8 @@ class Trainer:
             images = images.to(self.device)
             labels = labels.to(self.device)
 
+            self.optimizer.zero_grad()
+
             output = self.model(images)
             loss = self.loss(output, labels)
             
@@ -50,7 +52,6 @@ class Trainer:
 
             loss.backward()
 
-            self.optimizer.zero_grad()
             self.optimizer.step()
 
         return (
@@ -70,18 +71,19 @@ class Trainer:
         total_loss = 0.0
         total_accuracy = 0
 
-        for images, labels in tqdm(self.validating, total=len(self.validating)):
-            images = images.to(self.device)
-            labels = labels.to(self.device)
+        with torch.no_grad():
+            for images, labels in tqdm(self.validating, total=len(self.validating)):
+                images = images.to(self.device)
+                labels = labels.to(self.device)
 
-            output = self.model(images)
-            loss = self.loss(output, labels)
-            
-            total_loss += loss.item()
+                output = self.model(images)
+                loss = self.loss(output, labels)
 
-            _, prediction = torch.max(output, dim=1)
-            
-            total_accuracy += (prediction == labels).sum().item()
+                total_loss += loss.item()
+
+                _, prediction = torch.max(output, dim=1)
+
+                total_accuracy += (prediction == labels).sum().item()
 
         return (
             total_loss / len(self.validating),

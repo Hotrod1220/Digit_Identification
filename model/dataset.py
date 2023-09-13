@@ -23,7 +23,8 @@ class MNIST:
         test_data = datasets.MNIST(
             root='data',
             train=False,
-            transform=ToTensor()
+            transform=ToTensor(),
+            download=True
         )
 
         self.train_loader = DataLoader(
