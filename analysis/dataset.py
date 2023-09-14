@@ -13,11 +13,11 @@ class Dataset:
     """
     def __init__(self):
         """
-        Constructor for Dataset, preprocesses the MNIST dataset and
+        Preprocesses the MNIST dataset and
         background image for analysis.
         """
         path = Path.cwd()
-        # data = path.joinpath('analysis/data/MNIST/raw')
+
         data = path.joinpath('data/MNIST/raw')
 
         data = MNIST(data)
@@ -30,7 +30,7 @@ class Dataset:
             color=0
         )
 
-    def _listToImage(self, image_list):
+    def _list_to_image(self, image_list):
         """
         Converts a list to a PIL Image.
 
@@ -43,6 +43,7 @@ class Dataset:
         pixels = image_list
         image = Image.new(mode='L', size=(28, 28))
         image.putdata(pixels)
+        
         return image
     
     def _intersection(self, positions, coord, image_size):
@@ -87,16 +88,16 @@ class Dataset:
                 True - Task B
         """
         path = Path.cwd().joinpath('dataset')
-        # path = Path.cwd().joinpath('analysis/dataset')
-
+        
         if vary_size:
             folder = 'nxn'
         else:
             folder = '28x28'
+        
+        dataset_path = path.joinpath(folder)
+
         file = 0
 
-        dataset_path = path.joinpath(folder)
-        
         for i in range(5):
             output = self.background.copy()
             
@@ -110,7 +111,7 @@ class Dataset:
                 label = self.labels[index]
 
                 image = self.images[index]
-                image = self._listToImage(image)
+                image = self._list_to_image(image)
 
                 if vary_size:
                     # Image scaling
@@ -127,12 +128,17 @@ class Dataset:
                     output.paste(image, (x, y))
             
                     positions.append((x, y))
-                    labels.append(label)
+                    labels.append((x, label))
                     
                     iterations = 0
 
                 iterations += 1
 
+            labels.sort()
+
+            for index in range(len(labels)):
+                labels[index] = labels[index][1]
+            
             file_path = dataset_path.joinpath(f"{str(file)}_labels_{labels}.png")
             output.save(file_path)
             
@@ -150,7 +156,7 @@ class Dataset:
         }
         
         for image in self.images:
-            image = self._listToImage(image)
+            image = self._list_to_image(image)
             image = np.array(image)
             indices = np.where(image != 0)
 

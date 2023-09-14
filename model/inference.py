@@ -11,11 +11,8 @@ if __name__ == '__main__':
     predictions = []
     predictor = Predictor()
 
-    # for i in range(0, 351):
-    #     image_path = current.joinpath(f"img_{i}.jpg")
-    for i in range(0, 40):
-        image_path = current.joinpath(f"pasted_{i}.jpg")
-        # image_path = current.joinpath(f"cropped_{i}.jpg")
+    for i in range(0, 351):
+        image_path = current.joinpath(f"img_{i}.jpg")
         image = Image.open(image_path)
 
         transform = transforms.Compose([transforms.PILToTensor()])
