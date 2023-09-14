@@ -1,8 +1,8 @@
 import ast
 import os
 import sys
-import torch
 import numpy as np
+import torchvision.transforms as transforms
 
 from abc import ABC, abstractmethod
 from glob import glob
@@ -87,28 +87,34 @@ class Analyze(ABC):
             image_size: int, used to determine bottom-right coordinate to crop.
 
         Returns:
-            2D nd.array, centered extracted digit
+            PIL Image, centered extracted digit
         """
-        digit = image[
-            coord[1] : coord[1] + image_size,
-            coord[0] : coord[0] + image_size
-        ]
+        image = Image.fromarray(image)
 
-        digit = self.center_digit(digit, image_size)
-        
-        return digit
+        image = image.crop((
+            coord[0],
+            coord[1],
+            coord[0] + image_size,
+            coord[1] + image_size
+        ))
+
+        image = self.center_digit(image, image_size)
+
+        return Image.fromarray(image)
     
     def center_digit(self, digit, image_size = 28):
         """
         Centers the cropped digit.
 
         Args:
-            digit: 2D nd.array, image to center.
+            digit: PIL Image, image to center.
             image_size: int, size of the image to center digit in.
 
         Returns:
             2D nd.array, centered digit image
         """
+        digit = np.array(digit)
+
         indices = np.where(digit != 0)
 
         start_x = np.min(indices[1])
@@ -134,9 +140,9 @@ class Analyze(ABC):
         Returns:
             int, 0 - 9 digit prediction
         """
-        image = torch.from_numpy(image)
+        transform = transforms.Compose([transforms.PILToTensor()])
+        image = transform(image)
         image = image.float()
-        image = image.unsqueeze(0)
         image /= 255
 
         prediction = self.predictor.predict(image)

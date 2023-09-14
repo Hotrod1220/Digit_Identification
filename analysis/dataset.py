@@ -98,7 +98,7 @@ class Dataset:
 
         file = 0
 
-        for i in range(5):
+        for i in range(20):
             output = self.background.copy()
             
             positions = []
