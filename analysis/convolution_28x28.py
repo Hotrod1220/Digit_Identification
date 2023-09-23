@@ -27,33 +27,16 @@ class Convolution(Analyze):
         
         for data in self.data:
             image = data[0]
+            labels = data[1]
 
             self.kernel_dim = 28
-            kernel = np.array(self.kernel_dim * [self.kernel_dim * [1]])
             
-            conv = self.convolution(image, kernel)
+            conv = self.convolution(image, self.kernel_dim)
             
             centers = self._centers(conv)
             centers.sort()
 
-            predictions = []
-            visual = image
-
-            for center in centers:
-                x = int(center[0] - self.kernel_dim + self.kernel_dim / 4)
-                y = int(center[1] - self.kernel_dim + self.kernel_dim / 4)
-
-                visual = self.visualize.boundary_box(
-                    visual, 
-                    (x, y),
-                    self.kernel_dim
-                )
-
-                digit = self.crop(image, (x, y))
-                prediction = self.predict(digit)
-                predictions.append(prediction)
-
-            labels = data[1]
+            predictions, visual = self.predictions(centers, image)
 
             file_path = visual_path.joinpath(f"{str(file)}_labels_{labels}.png")
             visual.save(file_path)
@@ -63,23 +46,23 @@ class Convolution(Analyze):
             accuracy = self.validate(predictions, labels)
             avg_accuracy += accuracy
 
-            print(f"\nAccuracy: {accuracy:.2f}")
-            print(f"Predictions: {predictions}, Labels: {labels}\n")
-
         avg_accuracy /= (len(self.data) / 100)
         print(f"Average Accuracy: {avg_accuracy:.2f}")
 
-    def convolution(self, image, kernel):
+    def convolution(self, image, kernel_dim):
         """
         Performs a 2D convolution on an image.
 
         Args:
             image: 2D nd.array, image that the convolution will be computed for.
-            kernel: 2D nd.array, convolution filter to apply during convolution.
+            kernel_dim: int, dimension of the convolution kernel
 
         Returns:
             2D nd.array, the final convolution image.
         """
+        kernel_dim -= 1
+        kernel = np.array(kernel_dim * [kernel_dim * [1]])
+
         conv = scipy.signal.convolve2d(
             image,
             kernel
@@ -121,6 +104,39 @@ class Convolution(Analyze):
         
         return centers
     
+    def predictions(self, centers, image):
+        """
+        Generates all the predictions for an image given a list of centers.
+
+        Args:
+            centers: list, tuples containing all centers it found
+            image: np.array, image that contains digits to be predicted
+
+        Returns:
+            list of int predictions
+        """
+        predictions = []
+        visual = image
+
+        for center in centers:
+            x = int(center[0] - self.kernel_dim + self.kernel_dim / 4)
+            y = int(center[1] - self.kernel_dim + self.kernel_dim / 4)
+
+            visual = self.visualize.boundary_box(
+                visual, 
+                (x, y),
+                self.kernel_dim
+            )
+
+            digit = self.crop(image, (x, y))
+            digit = self.center(digit, image_size = 28)
+            
+            prediction = self.predict(digit)
+            
+            predictions.append(prediction)
+
+        return predictions, visual
+
     def _repeated(self, centers, coord):
         """
         Checks the surrounding area of a coordinate to detect if it is a repeat.

@@ -13,8 +13,7 @@ class Dataset:
     """
     def __init__(self):
         """
-        Preprocesses the MNIST dataset and
-        background image for analysis.
+        Preprocesses the MNIST dataset and background image for analysis.
         """
         path = Path.cwd()
 
@@ -38,14 +37,39 @@ class Dataset:
             image_list: The pixel values of the image to be converted.
 
         Returns:
-            PIL Image.
+            PIL.Image, digit image.
         """
         pixels = image_list
-        image = Image.new(mode='L', size=(28, 28))
+        image = Image.new(
+            mode='L',
+            size=(28, 28)
+        )
         image.putdata(pixels)
         
         return image
     
+    def _crop_digit(self, image):
+        """
+        Crops a digit leaving no border.
+
+        Args:
+            image: PIL.Image, image to extract digit.
+
+        Returns:
+            PIL.Image, digit with no surrounding border.
+        """
+        digit = np.array(image)
+        indices = np.where(digit != 0)
+
+        x = np.min(indices[1]) - 1
+        y = np.min(indices[0]) - 1
+        x2 = np.max(indices[1]) + 2
+        y2 = np.max(indices[0]) + 2
+
+        image = image.crop((x, y, x2, y2))
+        
+        return image
+
     def _intersection(self, positions, coord, image_size):
         """
         Checks for intersection between two coordinates.
@@ -53,6 +77,7 @@ class Dataset:
         Args:
             positions: list containing the top-left coordinate of already placed digits.
             coord: coordinate of the new digit to be placed.
+            image_size: int, size of the intersection range to detect.
 
         Returns:
             True if intersection, False otherwise.
@@ -77,7 +102,7 @@ class Dataset:
             
         return False
     
-    def generate(self, vary_size):
+    def generate(self, vary_size, digit_size = 28, num_images = 5):
         """
         Creates a dataset of randomly pasted digits on a black background, 
         checks for intersections before pasting the digit. 
@@ -86,19 +111,21 @@ class Dataset:
             vary_size: boolean value indicates if the images should vary in size.
                 False - Task A
                 True - Task B
+            digit_size: int, size of the digits intersection restriction.
+            num_images: int, number of images to generate.
         """
         path = Path.cwd().joinpath('dataset')
         
         if vary_size:
             folder = 'nxn'
         else:
-            folder = '28x28'
+            folder = f'{digit_size}x{digit_size}'
         
         dataset_path = path.joinpath(folder)
 
         file = 0
 
-        for i in range(20):
+        for i in range(num_images):
             output = self.background.copy()
             
             positions = []
@@ -109,16 +136,19 @@ class Dataset:
                 index = randrange(len(self.images))
                 
                 label = self.labels[index]
-
                 image = self.images[index]
+
                 image = self._list_to_image(image)
+                
+                if digit_size != 28:
+                    image = self._crop_digit(image)
 
                 if vary_size:
                     # Image scaling
                     # Determine a way to get image size
                     image_size = 40
                 else:
-                    image_size = 28
+                    image_size = digit_size
 
                 random_range = self.background_dim - image_size
                 x = randrange(random_range)
@@ -188,5 +218,9 @@ class Dataset:
 
 if __name__ == '__main__':
     dataset = Dataset()
-    dataset.generate(vary_size=False)
+    dataset.generate(
+        vary_size = False,
+        digit_size = 20,
+        num_images = 100
+    )
     # dataset.digit_dimension()

@@ -2,6 +2,7 @@ import ast
 import os
 import sys
 import numpy as np
+import torch
 import torchvision.transforms as transforms
 
 from abc import ABC, abstractmethod
@@ -21,14 +22,15 @@ class Analyze(ABC):
     """
     Abtract class that preprocesses the data for analysis children classes.
     """
-    def __init__(self, vary_size):
+    def __init__(self, vary_size, digit_size = 28):
         """
         Initizes the data and visualization. Selects folder based on task.
 
         Args:
             vary_size: boolean value indicates if the images should vary in size.
-                False - Task A
                 True - Task B
+                False - Task C
+            digit_size: int, indicates the size of the Task B digit boundaries.
         """
         path = Path.cwd()
         self.dataset_path = path.joinpath('dataset')
@@ -36,7 +38,7 @@ class Analyze(ABC):
         if vary_size:
             folder = 'nxn'
         else:
-            folder = '28x28'        
+            folder = f'{digit_size}x{digit_size}'
         
         data_path = str(self.dataset_path.joinpath(f"{folder}/*.png"))
 
@@ -58,7 +60,7 @@ class Analyze(ABC):
             paths: list containing the paths for the images, labels are from filename.
 
         Returns:
-            List of tuples, (image as a 2D nd.array, labels as a string).
+            list, tuples (image as a 2D nd.array, labels as a string).
         """
         data = []
         start = 'labels_'
@@ -87,7 +89,7 @@ class Analyze(ABC):
             image_size: int, used to determine bottom-right coordinate to crop.
 
         Returns:
-            PIL Image, centered extracted digit
+            2D nd.array, extracted digit
         """
         image = Image.fromarray(image)
 
@@ -98,24 +100,37 @@ class Analyze(ABC):
             coord[1] + image_size
         ))
 
-        image = self.center_digit(image, image_size)
+        if image_size != 28:
+            background = Image.new(
+                mode='L',
+                size=(28, 28),
+                color=0
+            )
 
-        return Image.fromarray(image)
+            background.paste(image)
+            image = background
+
+        image = np.array(image)
+        image = image.astype(float)
+        image /= 255
+
+        return image
     
-    def center_digit(self, digit, image_size = 28):
+    def center(self, digit, image_size = 28):
         """
-        Centers the cropped digit.
+        Centers a digit in an image.
 
         Args:
-            digit: PIL Image, image to center.
+            digit: 2D nd.array, image to center.
             image_size: int, size of the image to center digit in.
 
         Returns:
             2D nd.array, centered digit image
         """
-        digit = np.array(digit)
-
         indices = np.where(digit != 0)
+
+        if indices[0].size == 0:
+            return digit
 
         start_x = np.min(indices[1])
         end_x = np.max(indices[1])
@@ -135,15 +150,22 @@ class Analyze(ABC):
         Gets the prediction of a single digit image.
 
         Args:
-            image: 2D nd.array, digit image to predict.
+            image: 2D nd.array | PIL.Image, digit image to predict.
 
         Returns:
             int, 0 - 9 digit prediction
         """
-        transform = transforms.Compose([transforms.PILToTensor()])
-        image = transform(image)
+        if isinstance(image, Image.Image):
+            transform = transforms.Compose([transforms.PILToTensor()])
+            image = transform(image)
+        else:
+            image = torch.from_numpy(image)
+            image = image.unsqueeze(0)
+        
         image = image.float()
-        image /= 255
+        
+        if image.max() > 1:
+            image /= 255
 
         prediction = self.predictor.predict(image)
 
@@ -179,5 +201,201 @@ class Analyze(ABC):
 
         accuracy /= float(len(labels))
 
+        print(f"\nAccuracy: {accuracy:.2f}")
+        print(f"Predictions: {predictions}, Labels: {labels}\n")
+
         return accuracy
         
+    def clusters(self, image):
+        """
+        Analyzes an image to determine the width and height of all clusters.
+
+        Args:
+            image: 2D nd.array, image containing the pixel clusters to detect.
+
+        Returns:
+            list, dictionaries containing the clusters information
+        """
+        indices = np.where(image > 0.1)
+
+        if indices[0].size == 0:
+            return None
+
+        x = indices[1]
+        y = indices[0]
+
+        x_sort = x.copy()
+        x_sort.sort()
+        y_sort = y.copy()
+        y_sort.sort()
+
+        boundary_x = []
+        boundary_y = []
+
+        for index in range(len(x_sort) - 1):
+            if (x_sort[index] - x_sort[index + 1] < -1):
+                boundary_x.append(x_sort[index] + 1)
+                
+            if (y_sort[index] - y_sort[index + 1] < -1):
+                boundary_y.append(y_sort[index] + 1)
+
+        if len(boundary_x) == 0 and len(boundary_y) == 0:
+            cluster = [{
+                'width' : (max(x) - min(x)) + 1,
+                'height' : (max(y) - min(y)) + 1,
+            }]
+
+            return cluster
+            
+        if len(boundary_x) > 0:
+            slices_x = self.slices(
+                boundary_x,
+                image,
+                horizontal = True
+            )
+
+            if len(boundary_y) > 0:
+                slices_xy = []
+
+                for x_sliced in slices_x:
+                    slices_xy += (
+                        self.slices(
+                            boundary_y,
+                            x_sliced,
+                            horizontal = False
+                        )
+                    )
+            else:
+                slices_xy = slices_x
+                
+        else:
+            slices_xy = self.slices(
+                boundary_y,
+                image,
+                horizontal = False
+            )
+
+        slices_xy = [
+            sliced_image
+            for sliced_image in slices_xy
+            if sliced_image.max() > 0.1
+        ]
+
+        clusters = []
+
+        for xy in slices_xy:
+            clusters += self.clusters(xy)
+
+        return clusters     
+    
+    def slices(self, boundaries, image, horizontal):
+        """
+        Slices a 2D array into sections according to a list of boundaries
+        
+        Args:
+            boundaries: list, the values where the image should be sliced
+            image: 2D nd.array, image that will be sliced
+            horizontal: Boolean, if the image is to be sliced horizontally 
+                        or vertically
+
+        Returns:
+            list, 2D nd.arrays, sliced images
+        """
+        slices = []
+        
+        for index in range(len(boundaries)):
+            if index == 0:
+                first = None
+                second = boundaries[index]
+            elif index == len(boundaries) - 1:
+                first = boundaries[index]
+                second = None
+            else:
+                first = boundaries[index]
+                second = boundaries[index + 1]
+
+            if horizontal:
+                slices.append(image[:, first:second])
+            else:
+                slices.append(image[first:second, :])
+
+            if index == 0:
+                if len(boundaries) >= 2:
+                    first = boundaries[index + 1]
+                
+                if horizontal:
+                    slices.append(image[:, second:first])
+                else:
+                    slices.append(image[second:first, :])
+
+        return slices
+    
+    def remove_noise(self, image):
+        """
+        Detects and removes any pixel noise from a digit image.
+
+        Args:
+            image: 2D nd.array, digit image to analyze.
+
+        Returns:
+            2D nd.array, image with noise removed.
+        """
+        clusters = self.clusters(image)
+
+        if len(clusters) == 1:
+            return image
+        
+        indices = np.where(image > 0.1)
+
+        x = indices[1]
+        y = indices[0]
+
+        x_sort = x.copy()
+        x_sort.sort()
+        y_sort = y.copy()
+        y_sort.sort()
+
+        boundary_x = []
+        boundary_y = []
+
+        for index in range(len(x_sort) - 1):
+            if (x_sort[index] - x_sort[index + 1] < -1):
+                boundary_x.append(x_sort[index] + 1)
+                
+            if (y_sort[index] - y_sort[index + 1] < -1):
+                boundary_y.append(y_sort[index] + 1)
+
+        if len(boundary_x) == 1:
+            slices = self.slices(
+                boundary_x,
+                image,
+                horizontal = True
+            )
+        else:
+            slices = self.slices(
+                boundary_y,
+                image,
+                horizontal = False
+            )
+
+        large = (
+            slices[0]
+            if slices[0].shape > slices[1].shape
+            else slices[1]
+        )
+
+        large = Image.fromarray(large * 255)
+
+        background = Image.new(
+            mode='L',
+            size=(28, 28),
+            color=0
+        )
+
+        background.paste(large)
+
+        image = np.array(background)
+        image = image.astype(float)
+        image /= 255
+
+        return image
