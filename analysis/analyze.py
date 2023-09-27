@@ -1,4 +1,5 @@
 import ast
+import csv
 import os
 import sys
 import numpy as np
@@ -6,7 +7,6 @@ import torch
 import torchvision.transforms as transforms
 
 from abc import ABC, abstractmethod
-from glob import glob
 from pathlib import Path
 from PIL import Image
 
@@ -33,26 +33,29 @@ class Analyze(ABC):
             digit_size: int, indicates the size of the Task B digit boundaries.
         """
         path = Path.cwd()
-        self.dataset_path = path.joinpath('dataset')
         
         if vary_size:
             folder = 'nxn'
         else:
             folder = f'{digit_size}x{digit_size}'
         
-        data_path = str(self.dataset_path.joinpath(f"{folder}/*.png"))
+        self.dataset_path = path.joinpath(f'dataset/{folder}')
+        # Debugger
+        # self.dataset_path = path.joinpath('analysis/dataset')
 
-        paths = glob(data_path)
-        self.data = self.init_data(paths)
+        csv_file = self.dataset_path.joinpath('annotations.csv')
+        self.data = self.init_data(csv_file)
 
-        self.visualize = Visualize()
+        visual_path = self.dataset_path.joinpath('visualization')
+        self.visualize = Visualize(visual_path)
+        
         self.predictor = Predictor()
 
     @abstractmethod
     def anaylze(self):
         pass
 
-    def init_data(self, paths):
+    def init_data(self, path):
         """
         Initialized data with images and labels from the task folder.
 
@@ -63,19 +66,14 @@ class Analyze(ABC):
             list, tuples (image as a 2D nd.array, labels as a string).
         """
         data = []
-        start = 'labels_'
-        end = '.png'
-
-        for path in paths:
-            start_index = path.find(start) + len(start)
-            end_index = path.find(end)
+        with open(path, 'r') as file:
+            csvreader = csv.reader(file)
             
-            labels = path[start_index:end_index]
-
-            image_png = Image.open(path)
-            image = np.array(image_png)
-            
-            data.append((image, labels))
+            for row in csvreader:
+                image_png = Image.open(row[0])
+                image = np.array(image_png)
+                
+                data.append((image, row[1]))
 
         return data
     
@@ -156,9 +154,11 @@ class Analyze(ABC):
             int, 0 - 9 digit prediction
         """
         if isinstance(image, Image.Image):
+            digit = image
             transform = transforms.Compose([transforms.PILToTensor()])
             image = transform(image)
         else:
+            digit = Image.fromarray(image)
             image = torch.from_numpy(image)
             image = image.unsqueeze(0)
         
@@ -168,6 +168,8 @@ class Analyze(ABC):
             image /= 255
 
         prediction = self.predictor.predict(image)
+
+        self.visualize.add_prediction((digit, prediction))
 
         return prediction
 

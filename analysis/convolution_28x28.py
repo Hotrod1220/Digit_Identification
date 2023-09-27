@@ -19,7 +19,7 @@ class Convolution(Analyze):
         """
         Analyzes the convolution image, extracting any digits present.
         """
-        visual_path = self.dataset_path.joinpath('visualization/28x28')
+        visual_path = self.dataset_path.joinpath('visualization')
         
         avg_accuracy = 0
         
@@ -38,7 +38,7 @@ class Convolution(Analyze):
 
             predictions, visual = self.predictions(centers, image)
 
-            file_path = visual_path.joinpath(f"{str(file)}_labels_{labels}.png")
+            file_path = visual_path.joinpath(f"{str(file)}.png")
             visual.save(file_path)
             
             file += 1
@@ -47,7 +47,7 @@ class Convolution(Analyze):
             avg_accuracy += accuracy
 
         avg_accuracy /= (len(self.data) / 100)
-        print(f"Average Accuracy: {avg_accuracy:.2f}")
+        print(f"Average Accuracy: {avg_accuracy:.2f}%")
 
     def convolution(self, image, kernel_dim):
         """

@@ -5,6 +5,24 @@ class Visualize:
     """
     Used for providing visualization for PIL Images
     """
+    def __init__(self, path):
+        self._path = path
+        self._image = None
+        self._predictions = []
+
+    def add_prediction(self, prediction):
+        self._predictions.append(prediction)
+
+    def set_image(self, image):
+        self._image = image
+
+    def reset(self):
+        self._image = None
+        self._predictions = []
+
+    def visualize(self):
+        pass
+
     def boundary_box(self, image, coord, box_size):
         """
         Creates an image with a boundary box indicated.

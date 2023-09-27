@@ -1,3 +1,5 @@
+import csv
+import os
 import numpy as np
 
 from random import randrange
@@ -17,9 +19,9 @@ class Dataset:
         """
         path = Path.cwd()
 
-        # data = path.joinpath('data/MNIST/raw')
+        data = path.joinpath('data/MNIST/raw')
         # Debugger
-        data = path.joinpath('analysis/data/MNIST/raw')
+        # data = path.joinpath('analysis/data/MNIST/raw')
 
         data = MNIST(data)
         self.images, self.labels = data.load_testing()      
@@ -122,10 +124,10 @@ class Dataset:
             digit_size: int, size of the digits intersection restriction.
             num_images: int, number of images to generate.
         """
-        # path = Path.cwd().joinpath('dataset')
+        path = Path.cwd().joinpath('dataset')
         # Debugger
 
-        path = Path.cwd().joinpath('analysis/dataset')
+        # path = Path.cwd().joinpath('analysis/dataset')
         
         if vary_size:
             folder = 'nxn'
@@ -133,6 +135,11 @@ class Dataset:
             folder = f'{digit_size}x{digit_size}'
         
         dataset_path = path.joinpath(folder)
+
+        csv_path = dataset_path.joinpath('annotations.csv')
+        
+        if os.path.exists(csv_path):
+            os.remove(csv_path)
 
         file = 0
 
@@ -166,7 +173,6 @@ class Dataset:
                     )
 
                     image_size = max(image.size)
-                    image.show()
                 else:
                     image_size = digit_size
 
@@ -183,7 +189,6 @@ class Dataset:
 
                 if not intersection:
                     output.paste(image, (x, y))
-                    output.show()
 
                     if vary_size:
                         positions.append(((x, y), image_size))
@@ -201,8 +206,12 @@ class Dataset:
             for index in range(len(labels)):
                 labels[index] = labels[index][1]
             
-            file_path = dataset_path.joinpath(f"{str(file)}_labels_{labels}.png")
+            file_path = dataset_path.joinpath(f"images/{str(file)}.png")
             output.save(file_path)
+
+            with open(csv_path, 'a') as f:
+                csv_file = csv.writer(f)
+                csv_file.writerow((file_path, labels))
             
             file += 1
 

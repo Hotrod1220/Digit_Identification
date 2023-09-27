@@ -23,9 +23,6 @@ class Convolution(Analyze):
         and predicts which digits are present.
         """
         visual_path = self.dataset_path.joinpath('visualization')
-        visual_path = visual_path.joinpath(
-            f'{self.digit_size}x{self.digit_size}'
-        )
         
         avg_accuracy = 0
         
@@ -42,7 +39,7 @@ class Convolution(Analyze):
 
             predictions, visual = self.predictions(centers, image)
 
-            file_path = visual_path.joinpath(f"{str(file)}_labels_{labels}.png")
+            file_path = visual_path.joinpath(f"{str(file)}.png")
             
             if isinstance(visual, Image.Image):
                 visual.save(file_path)
@@ -53,7 +50,7 @@ class Convolution(Analyze):
             avg_accuracy += accuracy
 
         avg_accuracy /= (len(self.data) / 100)
-        print(f"Average Accuracy: {avg_accuracy:.2f}")
+        print(f"Average Accuracy: {avg_accuracy:.2f}%")
 
     def convolution(self, image, kernel_dim):
         """
@@ -152,7 +149,7 @@ class Convolution(Analyze):
                 image_size = self.digit_size
             )
 
-            if (self._single_digit(digit)):
+            if self._single_digit(digit):
                 visualize = self._duplicated(
                     visualize,
                     (x, y),
