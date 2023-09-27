@@ -205,88 +205,6 @@ class Analyze(ABC):
         print(f"Predictions: {predictions}, Labels: {labels}\n")
 
         return accuracy
-        
-    def clusters(self, image):
-        """
-        Analyzes an image to determine the width and height of all clusters.
-
-        Args:
-            image: 2D nd.array, image containing the pixel clusters to detect.
-
-        Returns:
-            list, dictionaries containing the clusters information
-        """
-        indices = np.where(image > 0.1)
-
-        if indices[0].size == 0:
-            return None
-
-        x = indices[1]
-        y = indices[0]
-
-        x_sort = x.copy()
-        x_sort.sort()
-        y_sort = y.copy()
-        y_sort.sort()
-
-        boundary_x = []
-        boundary_y = []
-
-        for index in range(len(x_sort) - 1):
-            if (x_sort[index] - x_sort[index + 1] < -1):
-                boundary_x.append(x_sort[index] + 1)
-                
-            if (y_sort[index] - y_sort[index + 1] < -1):
-                boundary_y.append(y_sort[index] + 1)
-
-        if len(boundary_x) == 0 and len(boundary_y) == 0:
-            cluster = [{
-                'width' : (max(x) - min(x)) + 1,
-                'height' : (max(y) - min(y)) + 1,
-            }]
-
-            return cluster
-            
-        if len(boundary_x) > 0:
-            slices_x = self.slices(
-                boundary_x,
-                image,
-                horizontal = True
-            )
-
-            if len(boundary_y) > 0:
-                slices_xy = []
-
-                for x_sliced in slices_x:
-                    slices_xy += (
-                        self.slices(
-                            boundary_y,
-                            x_sliced,
-                            horizontal = False
-                        )
-                    )
-            else:
-                slices_xy = slices_x
-                
-        else:
-            slices_xy = self.slices(
-                boundary_y,
-                image,
-                horizontal = False
-            )
-
-        slices_xy = [
-            sliced_image
-            for sliced_image in slices_xy
-            if sliced_image.max() > 0.1
-        ]
-
-        clusters = []
-
-        for xy in slices_xy:
-            clusters += self.clusters(xy)
-
-        return clusters     
     
     def slices(self, boundaries, image, horizontal):
         """
@@ -340,11 +258,6 @@ class Analyze(ABC):
         Returns:
             2D nd.array, image with noise removed.
         """
-        clusters = self.clusters(image)
-
-        if len(clusters) == 1:
-            return image
-        
         indices = np.where(image > 0.1)
 
         x = indices[1]

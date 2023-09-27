@@ -17,7 +17,9 @@ class Dataset:
         """
         path = Path.cwd()
 
-        data = path.joinpath('data/MNIST/raw')
+        # data = path.joinpath('data/MNIST/raw')
+        # Debugger
+        data = path.joinpath('analysis/data/MNIST/raw')
 
         data = MNIST(data)
         self.images, self.labels = data.load_testing()      
@@ -59,7 +61,7 @@ class Dataset:
             PIL.Image, digit with no surrounding border.
         """
         digit = np.array(image)
-        indices = np.where(digit != 0)
+        indices = np.where(digit > 0.15)
 
         x = np.min(indices[1]) - 1
         y = np.min(indices[0]) - 1
@@ -70,7 +72,7 @@ class Dataset:
         
         return image
 
-    def _intersection(self, positions, coord, image_size):
+    def _intersection(self, positions, coord, size, vary_size):
         """
         Checks for intersection between two coordinates.
 
@@ -83,14 +85,20 @@ class Dataset:
             True if intersection, False otherwise.
         """
         for position in positions:
+            if vary_size:
+                size2 = position[1]
+                position = position[0]
+            else:
+                size2 = size
+            
             rect1_x1 = coord[0]
             rect1_y1 = coord[1]
-            rect1_x2 = coord[0] + image_size
-            rect1_y2 = coord[1] + image_size
+            rect1_x2 = coord[0] + size
+            rect1_y2 = coord[1] + size
             rect2_x1 = position[0]
             rect2_y1 = position[1]
-            rect2_x2 = position[0] + image_size
-            rect2_y2 = position[1] + image_size
+            rect2_x2 = position[0] + size2
+            rect2_y2 = position[1] + size2
 
             inter_left = max(rect1_x1, rect2_x1)
             inter_top = max(rect1_y1, rect2_y1)
@@ -114,7 +122,10 @@ class Dataset:
             digit_size: int, size of the digits intersection restriction.
             num_images: int, number of images to generate.
         """
-        path = Path.cwd().joinpath('dataset')
+        # path = Path.cwd().joinpath('dataset')
+        # Debugger
+
+        path = Path.cwd().joinpath('analysis/dataset')
         
         if vary_size:
             folder = 'nxn'
@@ -140,13 +151,22 @@ class Dataset:
 
                 image = self._list_to_image(image)
                 
-                if digit_size != 28:
+                if digit_size != 28 or vary_size:
                     image = self._crop_digit(image)
 
                 if vary_size:
-                    # Image scaling
-                    # Determine a way to get image size
-                    image_size = 40
+                    height = randrange(12, 50)
+                    
+                    ratio = height / float(image.size[1])
+                    width = int(float(image.size[0]) * float(ratio))
+                    
+                    image = image.resize(
+                        (width, height),
+                        Image.LANCZOS
+                    )
+
+                    image_size = max(image.size)
+                    image.show()
                 else:
                     image_size = digit_size
 
@@ -154,10 +174,22 @@ class Dataset:
                 x = randrange(random_range)
                 y = randrange(random_range)
 
-                if not self._intersection(positions, (x, y), image_size):
+                intersection = self._intersection(
+                    positions,
+                    (x, y),
+                    image_size,
+                    vary_size
+                )
+
+                if not intersection:
                     output.paste(image, (x, y))
-            
-                    positions.append((x, y))
+                    output.show()
+
+                    if vary_size:
+                        positions.append(((x, y), image_size))
+                    else:
+                        positions.append((x, y))
+
                     labels.append((x, label))
                     
                     iterations = 0
@@ -219,8 +251,8 @@ class Dataset:
 if __name__ == '__main__':
     dataset = Dataset()
     dataset.generate(
-        vary_size = False,
-        digit_size = 20,
-        num_images = 100
+        vary_size = True,
+        digit_size = 28,
+        num_images = 5
     )
     # dataset.digit_dimension()
