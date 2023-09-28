@@ -1,129 +1,22 @@
-import scipy
 import numpy as np
 
-from analyze import Analyze
-from PIL import Image
+from convolution import Convolution
 
 
-class Convolution(Analyze):
+class Convolution20(Convolution):
     """
     Extracts the digits present in an image using a convoluton operation.
     """
-    def __init__(self, digit_size):
+    def __init__(self):
         """
         Initizes the task to Task A for the extraction. 
         """
-        vary_size = False
-        self.digit_size = digit_size
-        super().__init__(vary_size, digit_size)
+        self.digit_size = 20
+        super().__init__(self.digit_size)
 
-    def anaylze(self):
-        """
-        Analyzes the convolution image, extracting any digits
-        and predicts which digits are present.
-        """
-        visual_path = self.dataset_path.joinpath('visualization')
-        
-        avg_accuracy = 0
-        
-        file = 0
-        
-        for data in self.data:
-            image = data[0]
-            labels = data[1]
-            
-            conv = self.convolution(image, self.digit_size)
-            
-            centers = self._centers(conv)
-            centers.sort()
+    def analyze(self):
+        super().analyze()
 
-            predictions, visual = self.predictions(centers, image)
-
-            file_path = visual_path.joinpath(f"{str(file)}.png")
-            
-            if isinstance(visual, Image.Image):
-                visual.save(file_path)
-            
-            file += 1
-            
-            accuracy = self.validate(predictions, labels)
-            avg_accuracy += accuracy
-
-        avg_accuracy /= (len(self.data) / 100)
-        print(f"Average Accuracy: {avg_accuracy:.2f}%")
-
-    def convolution(self, image, kernel_dim):
-        """
-        Performs a 2D convolution on an image.
-
-        Args:
-            image: 2D nd.array, image that the convolution will be computed for.
-            kernel_dim: int, dimension of the convolution kernel
-
-        Returns:
-            2D nd.array, the final convolution image.
-        """
-        kernel_dim -= 1
-        kernel = np.array(kernel_dim * [kernel_dim * [1]])
-
-        conv = scipy.signal.convolve2d(
-            image,
-            kernel
-        )
-        
-        conv_image = conv / (conv.max() / 255.0)
-        conv_image = np.uint8(conv_image)
-
-        return conv_image
-    
-    def _centers(self, conv):
-        """
-        Analyzes a convolution image to detect the general location of digits.
-
-        Args: 
-            conv: 2D nd.array, convolution image.
-
-        Returns:
-            list of coordinates where the center of the digits are.
-        """
-        indices = np.where(conv > 0.1)
-
-        centers = []
-
-        for index in range(len(indices[0])):
-            x = indices[1][index]
-            y = indices[0][index]
-            y2 = y + 1
-            y3 = y - 1
-            x2 = x + 1
-            x3 = x - 1
-            idx_max = len(conv) - 1
-
-            if y2 > idx_max:
-                y2 = idx_max
-            if y3 > idx_max:
-                y3 = idx_max
-            if x2 > idx_max:
-                x2 = idx_max
-            if x3 > idx_max:
-                x3 = idx_max
-
-            if conv[y][x] <= 0.1:
-                continue
-
-            v_gradient = conv[y3][x] < conv[y][x] >= conv[y2][x]
-            h_gradient = conv[y][x3] < conv[y][x] >= conv[y][x2]
-            h_equal = conv[y][x3] == conv[y][x] == conv[y][x2]
-            square = conv[y][x] == conv[y][x2] == conv[y2][x] == conv[y2][x2]
-
-            if (v_gradient and h_gradient or
-                v_gradient and h_equal or
-                square):
-                if not self._repeated(centers, (x, y), boundary = 6):
-                    centers.append((x, y))
-        
-        return centers
-    
     def predictions(self, centers, image):
         """
         Generates all the predictions for an image given a list of centers.
@@ -175,7 +68,7 @@ class Convolution(Analyze):
                 self.digit_size
             )
             
-            clusters = self.clusters(digit)
+            clusters = self._clusters(digit)
 
             if len(clusters) != 1:
                 digit = self.remove_noise(digit)
@@ -186,6 +79,61 @@ class Convolution(Analyze):
             predictions.append(prediction)
                 
         return predictions, visual
+    
+    def _centers(self, conv):
+        """
+        Analyzes a convolution image to detect the general location of digits.
+
+        Args: 
+            conv: 2D nd.array, convolution image.
+
+        Returns:
+            list of coordinates where the center of the digits are.
+        """
+        indices = np.where(conv > 0.1)
+
+        centers = []
+
+        for index in range(len(indices[0])):
+            x = indices[1][index]
+            y = indices[0][index]
+            y2 = y + 1
+            y3 = y - 1
+            x2 = x + 1
+            x3 = x - 1
+            idx_max = len(conv) - 1
+
+            if y2 > idx_max:
+                y2 = idx_max
+            if y3 > idx_max:
+                y3 = idx_max
+            if x2 > idx_max:
+                x2 = idx_max
+            if x3 > idx_max:
+                x3 = idx_max
+
+            if conv[y][x] <= 0.1:
+                continue
+
+            v_gradient = conv[y3][x] < conv[y][x] >= conv[y2][x]
+            h_gradient = conv[y][x3] < conv[y][x] >= conv[y][x2]
+            h_equal = conv[y][x3] == conv[y][x] == conv[y][x2]
+            square = conv[y][x] == conv[y][x2] == conv[y2][x] == conv[y2][x2]
+
+            if (v_gradient and h_gradient or
+                v_gradient and h_equal or
+                square):
+
+                repeated = self.repeated(
+                    centers,
+                    (x, y),
+                    boundary = 6
+                )
+
+                if not repeated:
+                    centers.append((x, y))
+        
+        return centers
 
     def _single_digit(self, digit):
         """
@@ -198,7 +146,7 @@ class Convolution(Analyze):
         Returns:
             True if single digit, False otherwise
         """
-        clusters = self.clusters(digit)
+        clusters = self._clusters(digit)
 
         if clusters is None:
             return False
@@ -231,31 +179,7 @@ class Convolution(Analyze):
         
         return False
     
-    def _repeated(self, centers, coord, boundary):
-        """
-        Checks the surrounding area of a coordinate to detect if it is a repeat.
-
-        Args:
-            centers: list, containing coordinates of discovered digit centers.
-            coord: tuple, (x, y) coordinate that is being checked if it is repeated.
-            boundary: the range around the coordinate.
-
-        Returns:
-            True if the coordinate is a repeat, False otherwise
-        """
-        for center in centers:
-            x_diff = coord[0] - center[0]
-            y_diff = coord[1] - center[1]
-
-            upper_bound = boundary
-            lower_bound = upper_bound * -1
-            if (x_diff < upper_bound and x_diff > lower_bound and
-                y_diff < upper_bound and y_diff > lower_bound):
-                return True
-
-        return False
-    
-    def clusters(self, image):
+    def _clusters(self, image):
         """
         Analyzes an image to determine the width and height of all clusters.
 
@@ -333,7 +257,7 @@ class Convolution(Analyze):
         clusters = []
 
         for xy in slices_xy:
-            clusters += self.clusters(xy)
+            clusters += self._clusters(xy)
 
         return clusters
     
@@ -393,7 +317,3 @@ class Convolution(Analyze):
             positions.append(coord)
                     
         return positions
-
-if __name__ == '__main__':
-    convolution = Convolution(digit_size = 20)
-    convolution.anaylze()

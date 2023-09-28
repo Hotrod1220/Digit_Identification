@@ -40,8 +40,6 @@ class Analyze(ABC):
             folder = f'{digit_size}x{digit_size}'
         
         self.dataset_path = path.joinpath(f'dataset/{folder}')
-        # Debugger
-        # self.dataset_path = path.joinpath('analysis/dataset')
 
         csv_file = self.dataset_path.joinpath('annotations.csv')
         self.data = self.init_data(csv_file)
@@ -52,7 +50,7 @@ class Analyze(ABC):
         self.predictor = Predictor()
 
     @abstractmethod
-    def anaylze(self):
+    def analyze(self):
         pass
 
     def init_data(self, path):
@@ -154,11 +152,13 @@ class Analyze(ABC):
             int, 0 - 9 digit prediction
         """
         if isinstance(image, Image.Image):
-            digit = image
+            digit = np.array(image)
+            digit = Image.fromarray(digit * 255)
+
             transform = transforms.Compose([transforms.PILToTensor()])
             image = transform(image)
         else:
-            digit = Image.fromarray(image)
+            digit = Image.fromarray(image * 255)
             image = torch.from_numpy(image)
             image = image.unsqueeze(0)
         
@@ -169,7 +169,7 @@ class Analyze(ABC):
 
         prediction = self.predictor.predict(image)
 
-        self.visualize.add_prediction((digit, prediction))
+        self.visualize.predictions.append((digit, prediction))
 
         return prediction
 

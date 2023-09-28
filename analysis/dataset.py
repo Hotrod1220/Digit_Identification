@@ -20,17 +20,15 @@ class Dataset:
         path = Path.cwd()
 
         data = path.joinpath('data/MNIST/raw')
-        # Debugger
-        # data = path.joinpath('analysis/data/MNIST/raw')
 
         data = MNIST(data)
         self.images, self.labels = data.load_testing()      
         
         self.background_dim = 28 * 5  
         self.background = Image.new(
-            mode='L',
-            size=(self.background_dim, self.background_dim),
-            color=0
+            mode = 'L',
+            size = (self.background_dim, self.background_dim),
+            color = 0
         )
 
     def _list_to_image(self, image_list):
@@ -45,8 +43,8 @@ class Dataset:
         """
         pixels = image_list
         image = Image.new(
-            mode='L',
-            size=(28, 28)
+            mode = 'L',
+            size = (28, 28)
         )
         image.putdata(pixels)
         
@@ -125,9 +123,6 @@ class Dataset:
             num_images: int, number of images to generate.
         """
         path = Path.cwd().joinpath('dataset')
-        # Debugger
-
-        # path = Path.cwd().joinpath('analysis/dataset')
         
         if vary_size:
             folder = 'nxn'
@@ -135,7 +130,6 @@ class Dataset:
             folder = f'{digit_size}x{digit_size}'
         
         dataset_path = path.joinpath(folder)
-
         csv_path = dataset_path.joinpath('annotations.csv')
         
         if os.path.exists(csv_path):
