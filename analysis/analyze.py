@@ -208,13 +208,13 @@ class Analyze(ABC):
 
         return accuracy
     
-    def slices(self, boundaries, image, horizontal):
+    def slices(self, image, boundaries, horizontal):
         """
         Slices a 2D array into sections according to a list of boundaries
         
         Args:
-            boundaries: list, the values where the image should be sliced
             image: 2D nd.array, image that will be sliced
+            boundaries: list, the values where the image should be sliced
             horizontal: Boolean, if the image is to be sliced horizontally 
                         or vertically
 
@@ -250,6 +250,58 @@ class Analyze(ABC):
 
         return slices
     
+    def slice_image(self, image, x_boundary, y_boundary):
+        """
+        Slices an image into differnt sections according 
+        to the boundaries given.
+
+        Args:
+            image: 2D nd.array, image to slice
+            x_boundary: list, int values for where to slice 
+                        the image horiztonally
+            y_boundary: list, int values for where to slice 
+                        the image vertically
+
+        Returns:
+            list, 2D nd.arrays, different slices of the image
+            
+        """
+        if len(x_boundary) > 0:
+            slices_x = self.slices(
+                image,
+                x_boundary,
+                horizontal = True
+            )
+
+            if len(y_boundary) > 0:
+                slices_xy = []
+
+                for x_sliced in slices_x:
+                    slices_xy += (
+                        self.slices(
+                            x_sliced,
+                            y_boundary,
+                            horizontal = False
+                        )
+                    )
+            else:
+                slices_xy = slices_x
+                
+        else:
+            slices_xy = self.slices(
+                image,
+                y_boundary,
+                horizontal = False
+            )
+
+        slices_xy = [
+            sliced_image
+            for sliced_image in slices_xy
+            if sliced_image.size != 0 and sliced_image.max() > 0.1
+        ]
+
+        return slices_xy
+    
     def remove_noise(self, image):
         """
         Detects and removes any pixel noise from a digit image.
@@ -282,14 +334,14 @@ class Analyze(ABC):
 
         if len(boundary_x) == 1:
             slices = self.slices(
-                boundary_x,
                 image,
+                boundary_x,
                 horizontal = True
             )
         else:
             slices = self.slices(
-                boundary_y,
                 image,
+                boundary_y,
                 horizontal = False
             )
 

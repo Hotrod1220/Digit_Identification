@@ -219,40 +219,8 @@ class Convolution20(Convolution):
             }]
 
             return cluster
-            
-        if len(boundary_x) > 0:
-            slices_x = self.slices(
-                boundary_x,
-                image,
-                horizontal = True
-            )
 
-            if len(boundary_y) > 0:
-                slices_xy = []
-
-                for x_sliced in slices_x:
-                    slices_xy += (
-                        self.slices(
-                            boundary_y,
-                            x_sliced,
-                            horizontal = False
-                        )
-                    )
-            else:
-                slices_xy = slices_x
-                
-        else:
-            slices_xy = self.slices(
-                boundary_y,
-                image,
-                horizontal = False
-            )
-
-        slices_xy = [
-            sliced_image
-            for sliced_image in slices_xy
-            if sliced_image.max() > 0.1
-        ]
+        slices_xy = self.slice_image(image, boundary_x, boundary_y)
 
         clusters = []
 

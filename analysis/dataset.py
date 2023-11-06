@@ -110,7 +110,7 @@ class Dataset:
             
         return False
     
-    def generate(self, vary_size, digit_size = 28, num_images = 5):
+    def generate(self, vary_size, digit_size = 28, num_images = 5, density = 10):
         """
         Creates a dataset of randomly pasted digits on a black background, 
         checks for intersections before pasting the digit. 
@@ -144,7 +144,7 @@ class Dataset:
             labels = []
             iterations = 0
 
-            while iterations < 10:
+            while iterations < density:
                 index = randrange(len(self.images))
                 
                 label = self.labels[index]
@@ -165,6 +165,9 @@ class Dataset:
                         (width, height),
                         Image.LANCZOS
                     )
+                    
+                    if height < 20:
+                        image = self._crop_digit(image)
 
                     image_size = max(image.size)
                 else:
@@ -255,7 +258,8 @@ if __name__ == '__main__':
     dataset = Dataset()
     dataset.generate(
         vary_size = True,
-        digit_size = 28,
-        num_images = 5
+        digit_size = 20,
+        num_images = 100,
+        density = 500
     )
     # dataset.digit_dimension()
