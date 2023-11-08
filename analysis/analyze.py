@@ -22,7 +22,12 @@ class Analyze(ABC):
     """
     Abtract class that preprocesses the data for analysis children classes.
     """
-    def __init__(self, vary_size, digit_size = 28):
+    def __init__(
+        self,
+        vary_size,
+        digit_size = 28,
+        folder = None
+    ):
         """
         Initizes the data and visualization. Selects folder based on task.
 
@@ -31,15 +36,19 @@ class Analyze(ABC):
                 True - Task B
                 False - Task C
             digit_size: int, indicates the size of the Task B digit boundaries.
+            folder: str, manually select folder.
         """
         path = Path.cwd()
         
         if vary_size:
-            folder = 'nxn'
+            file_folder = 'nxn'
         else:
-            folder = f'{digit_size}x{digit_size}'
+            file_folder = f'{digit_size}x{digit_size}'
+
+        if folder is not None:
+            file_folder = folder
         
-        self.dataset_path = path.joinpath(f'dataset/{folder}')
+        self.dataset_path = path.joinpath(f'dataset/{file_folder}')
 
         csv_file = self.dataset_path.joinpath('annotations.csv')
         self.data = self.init_data(csv_file)

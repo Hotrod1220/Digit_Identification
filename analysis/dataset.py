@@ -80,6 +80,7 @@ class Dataset:
             positions: list containing the top-left coordinate of already placed digits.
             coord: coordinate of the new digit to be placed.
             image_size: int, size of the intersection range to detect.
+            vary_size: bool, if the digits vary in size.
 
         Returns:
             True if intersection, False otherwise.
@@ -121,6 +122,8 @@ class Dataset:
                 True - Task B
             digit_size: int, size of the digits intersection restriction.
             num_images: int, number of images to generate.
+            density: int, measures how dense the image should be with numbers.
+                     note: values above 500 slows the program significantly
         """
         path = Path.cwd().joinpath('dataset')
         

@@ -34,7 +34,7 @@ class Visualize:
         x = 2
         y = 165
 
-        height = y + (self.height + 6) * int(len(predictions) / 4 + 0.5)
+        height = y + (self.height + 6) * int(len(predictions) / 4 + 0.75)
         width = (self.width + 4) * 4
 
         background = Image.new(

@@ -3,8 +3,7 @@ import copy
 import numpy as np
 
 from analyze import Analyze
-from itertools import combinations
-from PIL import Image
+from PIL import Image, ImageOps, ImageEnhance
 
 
 class DivideConquer(Analyze):
@@ -13,8 +12,16 @@ class DivideConquer(Analyze):
     digits on an image.
     """
 
-    def __init__(self):
-        super().__init__(vary_size=True)
+    def __init__(self, scanned = False, folder = None):
+        """
+        Initizes the data and visualization. Selects folder based on task.
+
+        Args:
+            scanned: bool, if the images were scanned from paper.
+            folder: str, manually select folder.
+        """
+        self._scanned = scanned
+        super().__init__(vary_size = True, folder = folder)
 
     def analyze(self):
         """
@@ -28,14 +35,18 @@ class DivideConquer(Analyze):
             image = data[0]
             labels = data[1]
 
+            if self._scanned:
+                image = self._preprocess_scan(image)
+
             image = image.astype("float")
             image /= 255.0
+
+            self.visualize.image = Image.fromarray(image * 255)
 
             predictions = self.predictions(image)
             accuracy = self.validate(predictions, labels)
             avg_accuracy += accuracy
 
-            self.visualize.image = Image.fromarray(image * 255)
             self.visualize.accuracy = accuracy
             self.visualize.visualize(file)
 
@@ -60,7 +71,7 @@ class DivideConquer(Analyze):
         digits = [digit for digit in digits if digit.max() > 0.5]
 
         for digit in digits:
-            if digit.shape[0] < 5 and digit.shape[1] < 5:
+            if digit.shape[0] < 11:
                 continue
 
             digit = self.resize(digit)
@@ -87,10 +98,13 @@ class DivideConquer(Analyze):
         digits = []
         x_zeros, y_zeros = self._zeros(image)
 
-        if len(x_zeros) <= 1 and len(y_zeros) <= 1:
+        if len(x_zeros) < 1 and len(y_zeros) < 1:
             count = self._num_clusters(image)
 
             if count > 1:
+                if image.shape[0] < 9:
+                    return []
+                
                 row, img_idx = self._smallest_sum(image)
                 pixels = self._pixels_slice(image, row, img_idx)
                 
@@ -126,7 +140,7 @@ class DivideConquer(Analyze):
             img_idx: row or column index.
 
         Returns:
-            2D nd.array, originial image with extracted digits covered.
+            2D nd.array, original image with extracted digits covered.
             list, 2D nd.array, extracted digits.
         """
         dimensions = []
@@ -138,7 +152,7 @@ class DivideConquer(Analyze):
             else:
                 coord = (img_idx, idx)
             
-            dimensions.append(self._cluster_dim(
+            dim, _ = self._cluster_dim(
                 image,
                 coord,
                 [],
@@ -148,11 +162,19 @@ class DivideConquer(Analyze):
                     float("inf"),
                     float("-inf"),
                 )
-            ))
+            )
 
-        for d in combinations(dimensions, 2):
-            if d[0] == d[1]:
-                dimensions.remove(d[0])
+            dimensions.append(dim)
+
+        index = 0
+        while index < len(dimensions) - 1:
+            index2 = 1
+            while index2 < len(dimensions):
+                if dimensions[index][0] == dimensions[index2][0]:
+                    dimensions.remove(dimensions[index])
+                else:
+                    index2 += 1
+            index += 1
 
         for dimension in dimensions:                    
             width = dimension[1] - dimension[0]
@@ -257,13 +279,14 @@ class DivideConquer(Analyze):
 
         for index in range(image.shape[0]):
             y_zero = np.all(image[index, :] < 0.15)
-            if y_zero:
+            
+            if y_zero and index != 0:
                 y.append(index)
 
         for idx in range(image.shape[1]):
             x_zero = np.all(image[:, idx] < 0.15)
 
-            if x_zero:
+            if x_zero and idx != 0:
                 x.append(idx)
 
         return x, y
@@ -383,10 +406,11 @@ class DivideConquer(Analyze):
         Returns:
             tuple, (x_min, x_max, y_min, y_max), dimensions of 
             digit detected.
+            list, tuples, (x, y), past pixels visited.
         """
         if image.shape[0] < 4 and image.shape[1] < 4:
             return (0, 0, 0, 0)
-
+        
         x = coord[0]
         y = coord[1]
         x_min = dimension[0]
@@ -410,8 +434,16 @@ class DivideConquer(Analyze):
         top = (x, y - 1)
         right = (x + 1, y)
         down = (x, y + 1)
+        top_left = (x - 1, y - 1)
+        top_right = (x + 1, y - 1)
+        down_left = (x - 1, y + 1)
+        down_right = (x + 1, y + 1)
 
-        directions = [left, top, right, down]
+        directions_base = [left, top, right, down]
+        directions = [
+            left, top, right, down,
+            top_left, top_right, down_left, down_right
+        ]
 
         for direction in directions:
             if direction in past_coords:
@@ -431,17 +463,17 @@ class DivideConquer(Analyze):
                 pixel = 0.0
 
             if pixel < 0.1:
-                for direct in directions:
+                for direct in directions_base:
                     if (direct != direction and 
                         not boundary_limit(direct)
                     ):
                         next_pixel = image[direct[1]][direct[0]]
                         
                         if next_pixel < 0.1 and not first:
-                            return (x_min, x_max, y_min, y_max)
+                            return (x_min, x_max, y_min, y_max), past_coords
                 continue
 
-            next_dim = self._cluster_dim(
+            next_dim, past_coords = self._cluster_dim(
                 image = image,
                 coord = (direction[0], direction[1]),
                 past_coords = past_coords,
@@ -457,5 +489,22 @@ class DivideConquer(Analyze):
             if next_dim[3] > y_max:
                 y_max = next_dim[3]
 
-        return (x_min, x_max, y_min, y_max)
-    
+        return (x_min, x_max, y_min, y_max), past_coords
+
+    def _preprocess_scan(self, image):
+        image = (image * 255).astype(np.uint8)
+                
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        image = cv2.dilate(image, kernel, iterations = 2)
+        
+        image = Image.fromarray(image)
+        
+        image = ImageOps.grayscale(image)
+        image = image.resize((140, 140), Image.LANCZOS)
+        
+        enhancer = ImageEnhance.Contrast(image)
+        image = enhancer.enhance(5)
+
+        image = np.array(image)
+
+        return image
