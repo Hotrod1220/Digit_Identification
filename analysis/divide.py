@@ -8,11 +8,11 @@ from PIL import Image, ImageOps, ImageEnhance
 
 class DivideConquer(Analyze):
     """
-    Uses divide and conquer technique to identify handwritten 
+    Uses divide and conquer technique to identify handwritten
     digits on an image.
     """
 
-    def __init__(self, scanned = False, folder = None):
+    def __init__(self, scanned=False, folder=None):
         """
         Initizes the data and visualization. Selects folder based on task.
 
@@ -21,11 +21,11 @@ class DivideConquer(Analyze):
             folder: str, manually select folder.
         """
         self._scanned = scanned
-        super().__init__(vary_size = True, folder = folder)
+        super().__init__(vary_size=True, folder=folder)
 
     def analyze(self):
         """
-        Analyze images with digits of varying sizes to predict 
+        Analyze images with digits of varying sizes to predict
         handwritten digits that are present.
         """
         avg_accuracy = 0
@@ -57,7 +57,7 @@ class DivideConquer(Analyze):
 
     def predictions(self, image):
         """
-        Acquires and returns all the predictions for the 
+        Acquires and returns all the predictions for the
         handwritten digits on an image.
 
         Args:
@@ -81,12 +81,12 @@ class DivideConquer(Analyze):
             predictions.append(prediction)
 
         return predictions
-    
+
     def divide(self, image):
         """
         Extracts digits by spliting image where black rows or columns
-        are detected. If no rows or columns are detected, uses 
-        algorithm inspired from DBScan to extract a digit. It then 
+        are detected. If no rows or columns are detected, uses
+        algorithm inspired from DBScan to extract a digit. It then
         covers the digit in the original image, then continues.
 
         Args:
@@ -104,10 +104,10 @@ class DivideConquer(Analyze):
             if count > 1:
                 if image.shape[0] < 9:
                     return []
-                
+
                 row, img_idx = self._smallest_sum(image)
                 pixels = self._pixels_slice(image, row, img_idx)
-                
+
                 image, extract = self._extract_digits(image, row, pixels, img_idx)
 
                 if isinstance(image, list):
@@ -126,11 +126,11 @@ class DivideConquer(Analyze):
                 digits += self.divide(xy)
 
         return digits
-    
+
     def _extract_digits(self, image, row, pixels, img_idx):
         """
-        Extracts all digits from an image using pixels from a 
-        row or column. Detects the dimensions of a digit, extracts 
+        Extracts all digits from an image using pixels from a
+        row or column. Detects the dimensions of a digit, extracts
         the digit and covers the digit in the original image.
 
         Args:
@@ -151,7 +151,7 @@ class DivideConquer(Analyze):
                 coord = (idx, img_idx)
             else:
                 coord = (img_idx, idx)
-            
+
             dim, _ = self._cluster_dim(
                 image,
                 coord,
@@ -161,7 +161,7 @@ class DivideConquer(Analyze):
                     float("-inf"),
                     float("inf"),
                     float("-inf"),
-                )
+                ),
             )
 
             dimensions.append(dim)
@@ -176,13 +176,11 @@ class DivideConquer(Analyze):
                     index2 += 1
             index += 1
 
-        for dimension in dimensions:                    
+        for dimension in dimensions:
             width = dimension[1] - dimension[0]
             height = dimension[3] - dimension[2]
 
-            if ((width < 3 and height < 3 and 
-                 len(dimensions) != 1)
-            ):
+            if width < 3 and height < 3 and len(dimensions) != 1:
                 continue
 
             if image.shape[1] - width < 5 and image.shape[0] - height < 5:
@@ -212,11 +210,7 @@ class DivideConquer(Analyze):
 
         digit = digit.resize((width, height), Image.LANCZOS)
 
-        background = Image.new(
-            mode="L",
-            size=(28, 28),
-            color=0
-        )
+        background = Image.new(mode="L", size=(28, 28), color=0)
 
         background.paste(digit)
         digit = background
@@ -226,11 +220,11 @@ class DivideConquer(Analyze):
         digit /= 255
 
         return digit
-    
+
     def _crop(self, image, coord):
         """
-        Crops a 2D nd.array to extract a singular digit. Pastes a 
-        black square where the digit was extracted. 
+        Crops a 2D nd.array to extract a singular digit. Pastes a
+        black square where the digit was extracted.
 
         Args:
             image: 2D nd.array, large image to crop.
@@ -242,22 +236,13 @@ class DivideConquer(Analyze):
         """
         image = Image.fromarray(image)
 
-        digit = image.crop((
-            coord[0],
-            coord[2],
-            coord[1] + 1,
-            coord[3] + 1
-        ))
+        digit = image.crop((coord[0], coord[2], coord[1] + 1, coord[3] + 1))
         digit = np.array(digit)
 
         width = coord[1] + 1 - coord[0]
         height = coord[3] + 1 - coord[2]
 
-        black = Image.new(
-            mode='L',
-            size=(width, height),
-            color=0
-        )
+        black = Image.new(mode="L", size=(width, height), color=0)
         image.paste(black, (coord[0], coord[2]))
         image = np.array(image)
 
@@ -279,7 +264,7 @@ class DivideConquer(Analyze):
 
         for index in range(image.shape[0]):
             y_zero = np.all(image[index, :] < 0.15)
-            
+
             if y_zero and index != 0:
                 y.append(index)
 
@@ -304,19 +289,9 @@ class DivideConquer(Analyze):
         img = copy.deepcopy(image * 255)
         img = img.astype(np.uint8)
 
-        _, thresh = cv2.threshold(
-            img, 
-            0, 
-            255, 
-            cv2.THRESH_BINARY + cv2.THRESH_OTSU, 
-            img
-        )
+        _, thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU, img)
 
-        contours, _ = cv2.findContours(
-            thresh,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_NONE
-        )
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         return len(contours)
 
@@ -362,7 +337,7 @@ class DivideConquer(Analyze):
     def _pixels_slice(self, image, row, img_idx):
         """
         Given a row or column, it detects the pixels present.
-        If there are mulitple adjacent pixels, they are from 
+        If there are mulitple adjacent pixels, they are from
         the same cluster, only saves one pixel per cluster.
 
         Args:
@@ -390,7 +365,7 @@ class DivideConquer(Analyze):
             pixels.remove(x)
 
         return pixels
-    
+
     def _cluster_dim(self, image, coord, past_coords, dimension):
         """
         Given a coordinate for a pixel, analyzes surrounding pixels
@@ -404,13 +379,13 @@ class DivideConquer(Analyze):
                        dimensions of digit detected.
 
         Returns:
-            tuple, (x_min, x_max, y_min, y_max), dimensions of 
+            tuple, (x_min, x_max, y_min, y_max), dimensions of
             digit detected.
             list, tuples, (x, y), past pixels visited.
         """
         if image.shape[0] < 4 and image.shape[1] < 4:
             return (0, 0, 0, 0)
-        
+
         x = coord[0]
         y = coord[1]
         x_min = dimension[0]
@@ -441,20 +416,26 @@ class DivideConquer(Analyze):
 
         directions_base = [left, top, right, down]
         directions = [
-            left, top, right, down,
-            top_left, top_right, down_left, down_right
+            left,
+            top,
+            right,
+            down,
+            top_left,
+            top_right,
+            down_left,
+            down_right,
         ]
 
         for direction in directions:
             if direction in past_coords:
                 continue
-            
+
             def boundary_limit(d):
                 return (
-                    d[0] < 0 or 
-                    d[0] > image.shape[1] - 1 or 
-                    d[1] < 0 or
-                    d[1] > image.shape[0] - 1
+                    d[0] < 0
+                    or d[0] > image.shape[1] - 1
+                    or d[1] < 0
+                    or d[1] > image.shape[0] - 1
                 )
 
             if not boundary_limit(direction):
@@ -464,20 +445,18 @@ class DivideConquer(Analyze):
 
             if pixel < 0.1:
                 for direct in directions_base:
-                    if (direct != direction and 
-                        not boundary_limit(direct)
-                    ):
+                    if direct != direction and not boundary_limit(direct):
                         next_pixel = image[direct[1]][direct[0]]
-                        
+
                         if next_pixel < 0.1 and not first:
                             return (x_min, x_max, y_min, y_max), past_coords
                 continue
 
             next_dim, past_coords = self._cluster_dim(
-                image = image,
-                coord = (direction[0], direction[1]),
-                past_coords = past_coords,
-                dimension = (x_min, x_max, y_min, y_max)
+                image=image,
+                coord=(direction[0], direction[1]),
+                past_coords=past_coords,
+                dimension=(x_min, x_max, y_min, y_max),
             )
 
             if next_dim[0] < x_min:
@@ -492,16 +471,26 @@ class DivideConquer(Analyze):
         return (x_min, x_max, y_min, y_max), past_coords
 
     def _preprocess_scan(self, image):
+        """
+        Preprocesses a scanned image. Converts to black and white,
+        inverts colors and increases contrast.
+
+        Args:
+            image: 2D nd.array, image to preprocess.
+
+        Returns:
+            image: 2D nd.array, preprocessed image.
+        """
         image = (image * 255).astype(np.uint8)
-                
+
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        image = cv2.dilate(image, kernel, iterations = 2)
-        
+        image = cv2.dilate(image, kernel, iterations=2)
+
         image = Image.fromarray(image)
-        
+
         image = ImageOps.grayscale(image)
         image = image.resize((140, 140), Image.LANCZOS)
-        
+
         enhancer = ImageEnhance.Contrast(image)
         image = enhancer.enhance(5)
 
