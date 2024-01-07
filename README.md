@@ -16,8 +16,8 @@ Welcome to my undergraduate thesis project, focused on digit recognition in imag
 2. **Task B: Equal-Sized Digit Identification using Convolution**
     
     ![Task B V1](images/taskBV1.png)![Task B V2](images/taskBV2.png)
-   
-   *Version 1 and 2 for Task B.*
+   *Version 1 and 2 for Task B*
+
     - Random placement of digits onto an image
     - Digits are maintained at their 28 x 28 pixel size
     - Digit locations identified using convolution and predictions from Task A Neural Network
@@ -35,6 +35,7 @@ Welcome to my undergraduate thesis project, focused on digit recognition in imag
 3. **Task C: Varying-Sized Digit Identification using Image Analysis and Clustering Algorithm**
     
     ![Task C V1](images/taskCV1.png)![Task C V2](images/taskCV2.png)
+    *Version 1 and 2 for Task C*
     
     - Random placement of digits onto an image
     - Digits can vary in size
