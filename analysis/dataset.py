@@ -262,7 +262,7 @@ if __name__ == '__main__':
     dataset.generate(
         vary_size = True,
         digit_size = 20,
-        num_images = 100,
-        density = 500
+        num_images = 10,
+        density = 10
     )
     # dataset.digit_dimension()

@@ -91,6 +91,8 @@ class DivideConquerInner(DivideConquer):
         Args:
             image: 2D nd.array, large image to crop.
             dimension: tuple, (x1, x2, y1, y2) coordinate to crop.
+            coords: list, tuples, (x, y), pixel coordinates of 
+                    digit to extract.
 
         Returns:
             2D nd.array, image with black square over digit.

@@ -204,6 +204,6 @@ class DatasetInner(Dataset):
 if __name__ == '__main__':
     dataset = DatasetInner()
     dataset.generate(
-        num_images = 100,
+        num_images = 10,
         density = 100
     )

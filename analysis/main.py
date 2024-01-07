@@ -22,5 +22,5 @@ if __name__ == '__main__':
     # Task C with Scanned Images
     # divide_conquer_real.analyze()
 
-    # Task C with digits able to be in other digits
+    # Task C Version 2, digits can be contained in another digit
     divide_conquer_inner.analyze()

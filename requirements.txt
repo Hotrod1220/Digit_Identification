@@ -1,4 +1,7 @@
+numpy
+pathlib
 matplotlib
+pillow
 python-mnist
 scipy
 torch
