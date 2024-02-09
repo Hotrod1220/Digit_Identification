@@ -27,6 +27,7 @@ class Convolution(Analyze):
         and predicts which digits are present.
         """        
         avg_accuracy = 0
+        avg_local = 0
         
         file = 0
         
@@ -41,8 +42,9 @@ class Convolution(Analyze):
 
             predictions, visual = self.predictions(centers, image)            
             
-            accuracy = self.validate(predictions, labels)
+            accuracy, local_accuracy = self.validate(predictions, labels)
             avg_accuracy += accuracy
+            avg_local += local_accuracy
 
             self.visualize.image = visual
             self.visualize.accuracy = accuracy
@@ -51,7 +53,9 @@ class Convolution(Analyze):
             file += 1
 
         avg_accuracy /= (len(self.data) / 100)
+        avg_local /= (len(self.data) / 100)
         print(f"Average Accuracy: {avg_accuracy:.2f}%")
+        print(f"Average Localization Accuracy: {avg_local:.2f}%")
 
     def convolution(self, image, kernel_dim):
         """

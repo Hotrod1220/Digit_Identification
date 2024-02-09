@@ -29,6 +29,7 @@ class DivideConquer(Analyze):
         handwritten digits that are present.
         """
         avg_accuracy = 0
+        avg_local = 0
         file = 0
 
         for data in self.data:
@@ -44,16 +45,19 @@ class DivideConquer(Analyze):
             self.visualize.image = Image.fromarray(image * 255)
 
             predictions = self.predictions(image)
-            accuracy = self.validate(predictions, labels)
+            accuracy, local_accuracy = self.validate(predictions, labels)
             avg_accuracy += accuracy
+            avg_local += local_accuracy
 
             self.visualize.accuracy = accuracy
             self.visualize.visualize(file)
 
             file += 1
 
-        avg_accuracy /= len(self.data) / 100
+        avg_accuracy /= (len(self.data) / 100)
+        avg_local /= (len(self.data) / 100)
         print(f"Average Accuracy: {avg_accuracy:.2f}%")
+        print(f"Average Localization Accuracy: {avg_local:.2f}%")
 
     def predictions(self, image):
         """

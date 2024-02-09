@@ -65,6 +65,7 @@ class Visualize:
                 x = 0
                 y += self.height + 6
         
+        self._path.mkdir(parents=True, exist_ok=True)
         file_path = self._path.joinpath(f"{file}.png")
         background.save(file_path)
 

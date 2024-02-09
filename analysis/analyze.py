@@ -184,15 +184,17 @@ class Analyze(ABC):
 
     def validate(self, predictions, labels):
         """
-        Calculates the accuracy of the predictions from all the digits.
-        Note the order of predictions and labels does not always match.
+        Calculates the accuracy of the predictions and localization accuracy 
+        from all the digits. Note the order of predictions and labels does 
+        not always match.
 
         Args:
             predictions: list, contains all the predictions from the digits.
             labels: str, contains the validation labels for the digits.
 
         Returns:
-            float, accuracy of all the digit predictions.
+            tuple[float, float], accuracy and localization accuracy of all 
+            the digit predictions.
         """
         if isinstance(labels, str):
             labels = ast.literal_eval(labels)
@@ -203,8 +205,15 @@ class Analyze(ABC):
         sort_predictions = predictions.copy()
         sort_predictions.sort()
 
-        accuracy = 0
+        len_pred = len(sort_predictions)
+        len_labels = len(sort_labels)
+        
+        if len_pred > len_labels:
+            local_accuracy = (len_labels - (len_pred - len_labels)) / len_labels
+        else:
+            local_accuracy = len_pred / len_labels
 
+        accuracy = 0
         for predict in sort_predictions:
             if predict in sort_labels:
                 accuracy += 1
@@ -213,9 +222,10 @@ class Analyze(ABC):
         accuracy /= float(len(labels))
 
         print(f"\nAccuracy: {accuracy:.2f}")
+        print(f"Localization Accuracy: {local_accuracy:.2f}")
         print(f"Predictions: {predictions}, Labels: {labels}\n")
 
-        return accuracy
+        return accuracy, local_accuracy
     
     def slices(self, image, boundaries, horizontal):
         """
