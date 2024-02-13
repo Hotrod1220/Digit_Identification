@@ -3,7 +3,7 @@ import numpy as np
 
 from abc import abstractmethod
 from analyze import Analyze
-
+from PIL import Image
 
 class Convolution(Analyze):
     """
@@ -36,6 +36,9 @@ class Convolution(Analyze):
             labels = data[1]
             
             conv = self.convolution(image, self.digit_size)
+
+            conv_image = Image.fromarray(conv)
+            conv_image.show()
             
             centers = self._centers(conv)
             centers.sort()
