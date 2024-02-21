@@ -186,7 +186,7 @@ class DatasetInner(Dataset):
         image = self._list_to_image(image)
         image = self._crop_digit(image)
 
-        height = randrange(12, 50)
+        height = randrange(12, int(self.background_dim / 4))
         ratio = height / float(image.size[1])
         width = int(float(image.size[0]) * float(ratio))
         
@@ -204,6 +204,6 @@ class DatasetInner(Dataset):
 if __name__ == '__main__':
     dataset = DatasetInner()
     dataset.generate(
-        num_images = 10,
-        density = 100
+        num_images = 50,
+        density = 10
     )

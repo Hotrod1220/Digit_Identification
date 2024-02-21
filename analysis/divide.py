@@ -1,3 +1,4 @@
+import sys
 import cv2
 import copy
 import numpy as np
@@ -31,6 +32,7 @@ class DivideConquer(Analyze):
         avg_accuracy = 0
         avg_local = 0
         file = 0
+        sys.setrecursionlimit(5000)
 
         for data in self.data:
             image = data[0]
