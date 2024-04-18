@@ -1,9 +1,6 @@
 venv
-data
 .DS_Store
-model/state
+model/state/history.pkl
+model/state/trainer.pkl
 model/__pycache__/
-model/images/
-model/plot/
-analysis/dataset/
 analysis/__pycache__/

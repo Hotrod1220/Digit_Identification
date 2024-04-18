@@ -15,14 +15,14 @@ if __name__ == '__main__':
         history = pickle.load(handle)
 
     training = history.get('training')
-    validation = history.get('validation')
+    test = history.get('test')
 
     # Accuracy
     training_accuracy = training.get('classification_accuracy')
-    validation_accuracy = validation.get('classification_accuracy')
+    test_accuracy = test.get('classification_accuracy')
 
     training_accuracy = [x * 100 for x in training_accuracy]
-    validation_accuracy = [x * 100 for x in validation_accuracy]
+    test_accuracy = [x * 100 for x in test_accuracy]
 
     plt.figure(figsize=(10, 5))
 
@@ -32,14 +32,14 @@ if __name__ == '__main__':
     )
 
     plt.plot(
-        validation_accuracy,
-        label='Validation Accuracy'
+        test_accuracy,
+        label='test Accuracy'
     )
 
     plt.title('Classification: Accuracy')
     plt.xticks(
         np.arange(len(training_accuracy)), 
-        np.arange(1, len(validation_accuracy) + 1)
+        np.arange(1, len(test_accuracy) + 1)
     )
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy (%)')
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     # Loss
     training_loss = training.get('classification_loss')
-    validation_loss = validation.get('classification_loss')
+    test_loss = test.get('classification_loss')
 
     plt.figure(figsize=(10, 5))
 
@@ -66,14 +66,14 @@ if __name__ == '__main__':
     )
 
     plt.plot(
-        validation_loss,
-        label='Validation Loss'
+        test_loss,
+        label='testing Loss'
     )
 
     plt.title('Classification: Loss')
     plt.xticks(
         np.arange(len(training_loss)), 
-        np.arange(1, len(validation_loss) + 1)
+        np.arange(1, len(test_loss) + 1)
     )
     plt.xlabel('Epoch')
     plt.ylabel('Loss')

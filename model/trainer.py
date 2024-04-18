@@ -13,7 +13,7 @@ class Trainer:
         loss = None,
         optimizer = None,
         training = None,
-        validating = None,
+        testing = None,
     ):
         self.epochs = epochs
         self.device = device
@@ -21,7 +21,7 @@ class Trainer:
         self.loss = loss
         self.optimizer = optimizer
         self.training = training
-        self.validating = validating
+        self.testing = testing
 
     def _training_epoch(self):
         """
@@ -59,12 +59,12 @@ class Trainer:
             total_accuracy / len(self.training.dataset)
         )
 
-    def _validating_epoch(self):
+    def _testing_epoch(self):
         """
-        Performs a single training epoch on the validation dataset
+        Performs a single training epoch on the testing dataset
 
         Returns:
-            tuple, (accuracy, loss) of the validation epoch
+            tuple, (accuracy, loss) of the testing epoch
         """
         self.model.eval()
 
@@ -72,7 +72,7 @@ class Trainer:
         total_accuracy = 0
 
         with torch.no_grad():
-            for images, labels in tqdm(self.validating, total=len(self.validating)):
+            for images, labels in tqdm(self.testing, total=len(self.testing)):
                 images = images.to(self.device)
                 labels = labels.to(self.device)
 
@@ -86,17 +86,17 @@ class Trainer:
                 total_accuracy += (prediction == labels).sum().item()
 
         return (
-            total_loss / len(self.validating),
-            total_accuracy / len(self.validating.dataset)
+            total_loss / len(self.testing),
+            total_accuracy / len(self.testing.dataset)
         )
     
     def train(self):
         """
         Training process of the model, records accuracy and 
-        loss of validation and training.
+        loss of training and testing.
 
         Returns:
-            Dict, training and validation accuracy and loss throughout
+            Dict, training and testing accuracy and loss throughout
             the training process.
         """
         self.model.to(self.device)
@@ -106,7 +106,7 @@ class Trainer:
                 'classification_accuracy': [],
                 'classification_loss': []
             },
-            'validation': {
+            'test': {
                 'classification_accuracy': [],
                 'classification_loss': []
             }
@@ -126,16 +126,16 @@ class Trainer:
             print(f"training_accuracy: {accuracy:.4f}")
             print(f"training_loss: {loss:.4f}")
 
-            loss, accuracy = self._validating_epoch()
+            loss, accuracy = self._testing_epoch()
 
             accuracy = round(accuracy, 10)
             loss = round(loss, 10)
 
-            history['validation']['classification_accuracy'].append(accuracy)
-            history['validation']['classification_loss'].append(loss)
+            history['test']['classification_accuracy'].append(accuracy)
+            history['test']['classification_loss'].append(loss)
 
-            print(f"validation_accuracy: {accuracy:.4f}")
-            print(f"validation_loss: {loss:.4f}")
+            print(f"test_accuracy: {accuracy:.4f}")
+            print(f"test_loss: {loss:.4f}")
 
             print()
 

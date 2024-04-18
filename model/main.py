@@ -33,7 +33,7 @@ if __name__ == '__main__':
     trainer.loss = loss
     trainer.optimizer = optimizer
     trainer.training = dataset.train_loader
-    trainer.validating = dataset.test_loader
+    trainer.testing = dataset.test_loader
     history = trainer.train()
 
     torch.save(
